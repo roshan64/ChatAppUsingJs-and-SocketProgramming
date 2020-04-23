@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat Application</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script type="text/javascript" src="socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <!-- <h1>Testing</h1> -->
+    <div id="login-area">
+        <div id="login-text">
+            <h1>Login Page</h1>
+        </div>
+
+        <div id="login-form-area">
+            <form id="login-form">
+                <input type="text" id="username" placeholder="Username" autocomplete="off">
+                <input type="submit" id="login-submit" value="Login">
+            </form>
+        </div>
+    </div>
+    <div id="chat-area">
+        <div id="users-area">
+            <div id="online-users-text">
+                <h1>Online users:</h1>
+            </div>
+            <div id="online-users">
+                <ul id="users">
+                </ul>
+            </div>
+        </div>
+        <div id="message-area">
+            <div id="display-message-area">
+                <ul id="messages">
+                </ul>
+            </div>
+
+            <div id="message-form-area">
+                <form id="message-form">
+                    <input id="message" type="text" placeholder="Type Your Message....." autocomplete="off">
+                    <input id="message-submit" type="submit" value=" Send  ">
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    function updateUsers(list) {
+        for (var i = 0; i < list.length; i++) {
+            $("#users").append("<li><b>" + list[i] + "</b></li>");
+        }
+    }
+    var socket = io();
+    $("#login-form").submit(function(event) {
+        event.preventDefault();
+        if ($("#username").val() == "") {
+            alert("Enter valid Credentials");
+        } else {
+            $username = $("#username").val();
+
+            $("#login-area").hide();
+            $("#chat-area").show();
+            $("#messages").html("");
+
+            socket.emit("has connected", $username);
+        }
+    });
+    $("#message-form").submit(function(event) {
+        event.preventDefault();
+        // alert("Message cannot be empty");
+        if ($("#message").val() == "" || $("#message").val() == " ") {
+            alert("Message cannot be empty");
+        } else {
+            socket.emit("new message", {
+                username: $username,
+                message: $("#message").val()
+            });
+            $("#message").val("");
+        }
+    });
+    socket.on("has connected", function(data) {
+        $("#users").html("");
+        updateUsers(data.usersList);
+        $("#messages").append("<li><i><b>" + data.username + "</b>" + " has connected " + "</i></li>");
+    });
+    socket.on("has disconnected", function(data) {
+        $("#users").html("");
+        updateUsers(data.usersList);
+        $("#messages").append("<li><i><b>" + data.username + "</b>" + " has disconnected " + "</i></li>");
+    });
+
+    socket.on("new message", function(data) {
+        $("#messages").append("<li><b>" + data.username + "</b> " + data.message + "</li>");
+    });
+</script>
+
+</html>
